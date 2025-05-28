@@ -1,0 +1,40 @@
+<!-- <h2>Registred Client's List</h2> -->
+
+<!-- <div class="tablebg">
+    <table id="sortabletbl0" class="datatable" width="100%" border="0" cellspacing="1" cellpadding="3">
+        <tbody>
+            <tr>
+                <th width="20"><input type="checkbox" id="checkall0"></th>
+                <th><a href="/admin/clients.php?orderby=id">ID</a> <img src="images/desc.gif" class="absmiddle"></th>
+                <th><a href="/admin/clients.php?orderby=firstname">First Name</a></th>
+                <th><a href="/admin/clients.php?orderby=lastname">Last Name</a></th>
+                <th><a href="/admin/clients.php?orderby=companyname">Company Name</a></th>
+                <th><a href="/admin/clients.php?orderby=email">Email Address</a></th>
+                <th><a href="/admin/clients.php?orderby=datecreated">Created</a></th>
+                <th><a href="/admin/clients.php?orderby=status">Status</a></th>
+                <th><a href="#">Action</a></th>
+            </tr>
+            {foreach from=$tplVar.clients item=client}
+            <tr>
+                <td><input type="checkbox" name="selectedclients[]" value="1" class="checkall"></td>
+                <td><a href="clientssummary.php?userid={$client->id}">{$client->id}</a></td>
+                <td><a href="clientssummary.php?userid={$client->id}">{$client->firstname}</a></td>
+                <td><a href="clientssummary.php?userid={$client->id}">{$client->lastname}</a></td>
+                <td>{$client->companyname}</td>
+                <td><a href="mailto:{$client->email}">{$client->email}</a></td>
+                <td>{$client->companyname}</td>
+                <td><span class="label {if $client->status eq 'Active'}active{else}inactive{/if}">{if $client->status eq
+                        'Active'}Active{else}Inactive{/if}</span></td>
+                <td>
+                    <div class="btn-group btn-group-xs">
+                        <a href="" class="btn btn-default btn-xs">View</a>
+                        <a href="" class="btn btn-default btn-xs">Edit</a>
+                        <button type="button" class="btn btn-danger btn-xs">Delete</button>
+                    </div>
+                </td>
+            </tr>
+
+            {/foreach}
+        </tbody>
+    </table>
+</div> -->
