@@ -14,7 +14,7 @@
 }
 
 
-/*  */
+/* Ajax Table */
 .add_hdr {
   background: transparent;
   margin: 0px;
@@ -216,4 +216,117 @@ table.dataTable>thead>tr>th, table.dataTable>thead>tr>td {
 }
 th.textdata.sorting {
     text-align: center;
+}
+
+
+/* User Sync Modal */
+#syncModal {
+  display: none;
+}
+
+.icon-wrapper {
+  position: relative;
+  width: 50px;
+  height: 50px;
+  display: inline-block;
+}
+
+.icon-wrapper .fa-spinner {
+  font-size: 80px;
+  display: none;
+  color: #aaaaaa;
+  animation: spin 2s linear infinite;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.icon-wrapper .fa-spinner.icon-spin {
+  display: block;
+}
+
+.icon-wrapper .fa-user {
+  font-size: 40px;
+  color: #333;
+  position: absolute;
+  top: 80%;
+  left: 80%;
+  transform: translate(-50%, -50%);
+}
+
+/* Optional: Add spin animation to sync icon */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* complete modal */
+#completeModal {
+  display: none;
+}
+.icon-wrapper .fa-check-circle {
+  font-size: 60px;
+  color: green;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/*  */
+.sync-modal,
+.complete-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: none; 
+  background-color: rgba(0, 0, 0, 0.5);
+  justify-content: center;
+  align-items: center;  
+  z-index: 9999;
+}
+
+.sync-modal.show-modal,
+.complete-modal.show-modal {
+  display: flex;
+}
+
+.syncmodal-body,
+.completemodal-body {
+  background-color: #fff;
+  padding: 30px 20px;
+  border-radius: 10px;
+  max-width: 400px;
+  width: 90%;
+  margin: 10% auto;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+}
+
+.icon-wrapper {
+  font-size: 30px;
+  margin-bottom: 15px;
+}
+
+.syncmodal-body .btn,
+.completemodal-body .btn {
+  margin: 10px 5px 0;
+}
+
+p.modal-msg {
+  margin: 15px 0px 5px;
+}
+
+/* Invoice Sync */
+#invoiceSyncModal {
+  display: none;
+}
+.icon-wrapper .fa-file-invoice {
+  font-size: 40px;
+  color: #333;
+  position: absolute;
+  top: 80%;
+  left: 80%;
+  transform: translate(-50%, -50%);
 }

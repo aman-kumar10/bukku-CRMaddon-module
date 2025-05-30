@@ -1,4 +1,5 @@
 {include file=$tplVar.header}
+{include file=$tplVar.modals}
 
 
 <h2>Invoices</h2>
@@ -18,3 +19,7 @@
         </tr>
     </thead>
 </table>
+
+<div class="selcted-itms text-center">
+    <a class="btn btn-primary">  Sync Selected</a>
+</div>

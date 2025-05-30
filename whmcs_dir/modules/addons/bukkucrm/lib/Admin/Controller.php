@@ -23,6 +23,7 @@ class Controller
         $this->tplVar['urlPath'] = $CONFIG['SystemURL'] . "/modules/addons/{$module}/";
         $this->tplVar['tplDIR'] = ROOTDIR . "/modules/addons/{$module}/templates/";
         $this->tplVar['header'] = ROOTDIR . "/modules/addons/{$module}/templates/header.tpl";
+        $this->tplVar['modals'] = ROOTDIR . "/modules/addons/{$module}/templates/modals.tpl";
         $this->tplVar['moduleLink'] = $params['modulelink'];
     }
 

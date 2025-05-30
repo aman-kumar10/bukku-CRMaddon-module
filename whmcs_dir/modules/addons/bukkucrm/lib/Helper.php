@@ -38,7 +38,7 @@ class Helper
                 'status' => $client->status,
                 'created_at' => $client->created_at,
                 'action_btns' => '
-                    <a class="btn btn-primary btn-sm user-syn-btn" data-userid="' . $client->id . '"><i class="fas fa-sync" id="sync-icon-' . $client->id . '"></i> Sync</a>'
+                    <a class="btn btn-primary btn-sm user-syn-btn" data-userid="' . $client->id . '" data-username="' . $client->name . '"><i class="fas fa-sync" id="sync-icon-' . $client->id . '"></i> Sync</a>'
             ];
         }
 
@@ -111,7 +111,7 @@ class Helper
                 'payment_method' => $invoice->paymentmethod,
                 'status' => $invoice->status,
                 'action_btns' => '
-                    <a class="btn btn-primary btn-sm user-syn-btn" data-userid="' . $invoice->id . '"><i class="fas fa-sync" id="sync-icon-' . $invoice->id . '"></i> Sync</a>'
+                    <a class="btn btn-primary btn-sm invoice-syn-btn" data-userid="' . $invoice->id . '"><i class="fas fa-sync" id="sync-icon-' . $invoice->id . '"></i> Sync</a>'
             ];
         }
 

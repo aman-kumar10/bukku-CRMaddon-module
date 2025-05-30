@@ -1,4 +1,6 @@
 {include file=$tplVar.header}
+{include file=$tplVar.modals}
+
 
 <h2>Registered Client's List</h2>
 
@@ -18,4 +20,6 @@
 </table>
 
 
-
+<div class="selcted-itms text-center">
+    <a class="btn btn-primary"><img src="" alt=""> Syn Selected</a>
+</div>
