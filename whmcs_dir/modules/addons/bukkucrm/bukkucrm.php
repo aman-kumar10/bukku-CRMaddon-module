@@ -18,7 +18,7 @@ function bukkucrm_config() {
         'version' => '1.0',
         'fields' => [
             'access_hash' => [
-                'FriendlyName' => 'Access Hash',
+                'FriendlyName' => 'Access Token',
                 'Type' => 'textarea',
                 'Rows' => '3',
                 'Cols' => '60',
@@ -30,12 +30,22 @@ function bukkucrm_config() {
                 'Size' => '25',
                 'Description' => "Company's Sub Domain goes here",
             ],
+            'api_test_connection' => [
+                'FriendlyName' => 'Test Mode',
+                'Type' => 'yesno',
+                'Description' => "Enable this to activate test mode.",
+            ],
         ]
     ];
 }
 
 function bukkucrm_activate() {
     try {
+        if(Capsule::table('tblcustomfields')->where('fieldname','like','bukkuClientID|%')->count()==0){
+            Capsule::table('tblcustomfields')->insert([
+                'type'=>'client', 'relid'=>0, 'fieldname'=>'bukkuClientID|Bukku Client Id', 'fieldtype'=>'text', 'description'=>'', 'fieldoptions'=>'', 'regexpr'=>'', 'adminonly'=> '', 'required'=>'', 'showorder'=>'', 'showinvoice'=>'', 'sortorder'=>0,
+            ]);
+        }
         return [
             'status' => 'success',
             'description' => 'Module activated successfully',

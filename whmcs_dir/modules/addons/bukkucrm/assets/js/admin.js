@@ -35,6 +35,7 @@ $(document).ready(function () {
     });
 
 
+
     // Check all
     $('#checkallClients').on('change', function () {
         $('.checkall').prop('checked', $(this).prop('checked'));
@@ -53,12 +54,68 @@ $(document).ready(function () {
     });
 
 
-    // User Sync Modal
+    // // User Sync Modal
+    // $(document).on('click', '.user-syn-btn', function () {
+    //     const userId = $(this).data('userid');
+    //     $('#sync-user-id').val(userId);
+    //     const userName = $(this).data('username');
+    //     $('#sync-user-name').val(userName);
+    //     $('#syncModal').css('display', 'block');
+    // });
+
+    // $(document).on('click', '.cancel-btn', function () {
+    //     $('#syncModal').hide();
+    // });
+
+    // $(document).on('click', '.ok-btn', function () {
+    //     $('#completeModal').hide();
+    // });
+
+    // $(document).on('click', '.yes-btn', function () {
+    //     $(".fa.fa-spinner").addClass("icon-spin");
+    //     $(".icon-wrapper .fas.fa-user").css('font-size', '30px');
+    //     setTimeout(function () {
+    //         $(".fa.fa-spinner").removeClass("icon-spin");
+    //         $('#syncModal').hide();
+    //         $('#sync-userName').html($('#sync-user-name').val());
+    //         $('#completeModal').show();
+    //         $(".icon-wrapper .fas.fa-user").css('font-size', '40px');
+    //     }, 3000);
+    // });
+
+
+    // // Invoice Sync Modal
+    // $(document).on('click', '.invoice-syn-btn', function () {
+    //     $('#invoiceSyncModal').css('display', 'block');
+    // });
+
+    // $(document).on('click', '.cancel-btn', function () {
+    //     $('#invoiceSyncModal').hide();
+    // });
+
+    // $(document).on('click', '.ok-btn', function () {
+    //     $('#completeModal').hide();
+    // });
+
+    // $(document).on('click', '.yes-btn', function () {
+    //     $(".fa.fa-spinner").addClass("icon-spin");
+    //     $(".icon-wrapper .fas.fa-file-invoice").css('font-size', '30px');
+    //     setTimeout(function () {
+    //         $(".fa.fa-spinner").removeClass("icon-spin");
+    //         $('#invoiceSyncModal').hide();
+    //         $('#sync-userName').html('Invoice');
+    //         $('#completeModal').show();
+    //         $(".icon-wrapper .fas.fa-file-invoice").css('font-size', '40px');
+    //     }, 3000);
+    // });
+
+
+
+    // Syncs clients
+    let syncUserId = null;
+
     $(document).on('click', '.user-syn-btn', function () {
-        const userId = $(this).data('userid');
-        $('#sync-user-id').val(userId);
-        const userName = $(this).data('username');
-        $('#sync-user-name').val(userName);
+        syncUserId = $(this).data('userid');  
         $('#syncModal').css('display', 'block');
     });
 
@@ -66,46 +123,68 @@ $(document).ready(function () {
         $('#syncModal').hide();
     });
 
-    $(document).on('click', '.ok-btn', function () {
-        $('#completeModal').hide();
+    $(document).on('click', '#syncModal', function (e) {
+        if ($(e.target).is('#syncModal')) {
+            $('#syncModal').hide();
+        }
     });
 
     $(document).on('click', '.yes-btn', function () {
+        if (!syncUserId) return;
+
         $(".fa.fa-spinner").addClass("icon-spin");
         $(".icon-wrapper .fas.fa-user").css('font-size', '30px');
-        setTimeout(function () {
-            $(".fa.fa-spinner").removeClass("icon-spin");
-            $('#syncModal').hide();
-            $('#sync-userName').html($('#sync-user-name').val());
-            $('#completeModal').show();
-            $(".icon-wrapper .fas.fa-user").css('font-size', '40px');
-        }, 3000);
+
+        $.ajax({
+            url: '',
+            type: 'POST',
+            data: {
+                form_action: 'create_contact',
+                user_id: syncUserId
+            },
+            dataType: 'json',
+            success: function (response) {
+                console.log('Message:', response);
+                $('#syncModal').hide();
+                if (response.status === 'success') {
+                    iziToast.success({
+                        title: 'Success',
+                        message: response.message,
+                        position: 'topRight'
+                    });
+                    
+                    $('#clientTable').DataTable().ajax.reload(null, false);
+
+                } else if (response.status === 'warning') {
+                    iziToast.warning({
+                        title: 'Error',
+                        message: response.message,
+                        position: 'topRight'
+                    });
+                } else {
+                    iziToast.error({
+                        title: 'Error',
+                        message: response.message,
+                        position: 'topRight'
+                    });
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('AJAX Error:', error);
+                iziToast.error({
+                    title: 'Error',
+                    message: 'AJAX request failed: ' + error,
+                    position: 'topRight'
+                });
+            },
+            complete: function () {
+                $(".fa.fa-spinner").removeClass("icon-spin");
+                syncUserId = null; 
+            }
+        });
     });
 
 
-    // Invoice Sync Modal
-    $(document).on('click', '.invoice-syn-btn', function () {
-        $('#invoiceSyncModal').css('display', 'block');
-    });
 
-    $(document).on('click', '.cancel-btn', function () {
-        $('#invoiceSyncModal').hide();
-    });
-
-    $(document).on('click', '.ok-btn', function () {
-        $('#completeModal').hide();
-    });
-
-    $(document).on('click', '.yes-btn', function () {
-        $(".fa.fa-spinner").addClass("icon-spin");
-        $(".icon-wrapper .fas.fa-file-invoice").css('font-size', '30px');
-        setTimeout(function () {
-            $(".fa.fa-spinner").removeClass("icon-spin");
-            $('#invoiceSyncModal').hide();
-            $('#sync-userName').html('Invoice');
-            $('#completeModal').show();
-            $(".icon-wrapper .fas.fa-file-invoice").css('font-size', '40px');
-        }, 3000);
-    });
 });
 
