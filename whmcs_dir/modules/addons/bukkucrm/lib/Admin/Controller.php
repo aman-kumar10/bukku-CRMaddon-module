@@ -2,6 +2,8 @@
 
 namespace WHMCS\Module\Addon\Bukkucrm\Admin;
 
+use WHMCS\Module\Addon\Bukkucrm\Helper;
+
 use WHMCS\Database\Capsule;
 use Smarty;
 
@@ -29,13 +31,21 @@ class Controller
 
     public function clients()
     {
+        $helper = new Helper;
 
+        if (isset($_REQUEST['form_action']) && $_REQUEST['form_action'] == 'create_contact') {
+            $response = $helper->create_contact($_REQUEST['user_id']);
+            
+            header('Content-Type: application/json');
+            echo json_encode($response);
+            exit;
+        }
         $this->tplFileName = $this->tplVar['tab'] = __FUNCTION__;
         $this->output();
     }
     public function invoices_sync()
     {
-       
+
         $this->tplFileName = $this->tplVar['tab'] = __FUNCTION__;
         $this->output();
     }

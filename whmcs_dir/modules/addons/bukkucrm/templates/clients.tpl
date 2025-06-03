@@ -20,6 +20,6 @@
 </table>
 
 
-<div class="selcted-itms text-center">
+<div class="selcted-itms">
     <a class="btn btn-primary"><img src="" alt=""> Syn Selected</a>
 </div>
