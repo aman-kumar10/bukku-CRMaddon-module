@@ -20,6 +20,6 @@
     </thead>
 </table>
 
-<div class="selcted-itms text-center">
+<div class="selcted-itms">
     <a class="btn btn-primary">  Sync Selected</a>
 </div>

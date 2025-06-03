@@ -217,6 +217,9 @@ table.dataTable>thead>tr>th, table.dataTable>thead>tr>td {
 th.textdata.sorting {
     text-align: center;
 }
+.selcted-itms {
+    padding: 15px 0px 15px;
+}
 
 
 /* User Sync Modal */
