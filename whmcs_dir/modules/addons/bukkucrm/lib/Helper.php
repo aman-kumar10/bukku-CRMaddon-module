@@ -133,7 +133,7 @@ class Helper
                 'payment_method' => $invoice->paymentmethod,
                 'status' => $invoice->status,
                 'action_btns' => '
-                    <a class="btn btn-primary btn-sm invoice-syn-btn" data-userid="' . $invoice->id . '"><i class="fas fa-sync" id="sync-icon-' . $invoice->id . '"></i> Sync</a>'
+                    <a class="btn btn-primary btn-sm invoice-syn-btn" data-invoiceid="' . $invoice->id . '"><i class="fas fa-sync" id="sync-icon-' . $invoice->id . '"></i> Sync</a>'
             ];
         }
 
@@ -220,6 +220,75 @@ class Helper
             } else {
                 $create_contact['response'] = json_decode($create_contact['response'], true);
                 return ['status' => 'warning', 'message' => $create_contact['response']['message']];
+            }
+        } else {
+            return ['status' => 'error', 'message' => 'Access token is missing.'];
+        }
+    }
+
+
+    // Get invoice details
+    public function create_invoice($id)
+    {
+        $token = Capsule::table('tbladdonmodules')->where('module', 'bukkucrm')->where('setting', 'access_hash')->first('value');
+        if ($token) {
+            $invoice = Capsule::table('tblinvoices')->where('id', $id)->first();
+            $currency = getCurrency($invoice->userid);
+
+            $field_id = Capsule::table('tblcustomfields')->where('fieldname', 'like', 'bukkuClientID|%')->where('type', 'client')->value('id');
+            $contact_id = Capsule::table('tblcustomfieldsvalues')->where('fieldid', $field_id)->where('relid', $invoice->userid)->value('value');
+
+            $order = Capsule::table('tblorders')->where('invoiceid', $invoice->id)->first();
+            $service = Capsule::table('tblhosting')->where('orderid', $order->id)->first();
+            $product = Capsule::table('tblproducts')->where('id', $service->packageid)->first();
+
+
+            $data = [
+                "payment_mode" => "credit",
+                "contact_id" => $contact_id,
+                "date" => $invoice->date,
+                "currency_code" => $currency['code'],
+                "exchange_rate" => $currency['rate'],
+                "tax_mode" => "inclusive",
+                "form_items" => [
+                    [
+                        "account_id"=> $invoice->invoicenum,
+                        "description"=> "Testing item",
+                        "service_date"=> $service->regdate,
+                        "product_id"=> 1,
+                        "product_unit_id"=> 1,
+                        "unit_price"=> $invoice->total,
+                        "quantity"=> 1.00,
+                        "discount"=> "10%",
+                        "tax_code_id"=> 3,
+                        "classification_code"=> "022"
+                    ]
+                ],
+                "term_items" => [
+                    [
+                        "term_id" => 3,
+                        "term_name" => "NET30",
+                        "date" => $invoice->duedate,
+                        "payment_due" => "100%",
+                        "description" => "Full Payment",
+                        "amount" => $invoice->total,
+                        "balance" => $invoice->total
+                    ]
+                ],
+                "status" => "draft",
+                "myinvois_action" => "NORMAL"
+            ];
+
+
+            $api = new Api;
+
+            $create_invoice = $api->create_invoice($data, $token);
+
+            if ($create_invoice['status_code'] == 200) {
+                return ['status' => 'success', 'message' => 'Invoice created successfully.'];
+            } else {
+                $create_invoice['response'] = json_decode($create_invoice['response'], true);
+                return ['status' => 'warning', 'message' => $create_invoice['response']['message']];
             }
         } else {
             return ['status' => 'error', 'message' => 'Access token is missing.'];
