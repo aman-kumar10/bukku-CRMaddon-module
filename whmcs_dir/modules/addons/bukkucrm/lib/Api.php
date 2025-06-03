@@ -29,4 +29,27 @@ class Api {
         return $curlresponse;
     }
 
+
+
+    function create_invoice($data, $token) {
+        // echo "<pre>"; print_r($data); die;
+       
+        $curl = new Curl();
+        $curl->endPoint = '/sales/invoices';
+        $curl->header =  [
+            'Accept: application/json',
+            'Company-Subdomain: myinvoisdemo',
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $token->value,
+        ];
+
+        $curl->action = __FUNCTION__;
+        $curl->method = 'POST';
+
+        $curl->data = $data;
+
+        $curlresponse = ($curl->curlCall());
+        return $curlresponse;
+    }
+
 }

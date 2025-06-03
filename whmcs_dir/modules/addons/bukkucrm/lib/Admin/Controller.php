@@ -46,6 +46,16 @@ class Controller
     public function invoices_sync()
     {
 
+        $helper = new Helper;
+
+        if (isset($_REQUEST['form_action']) && $_REQUEST['form_action'] == 'create_invoice') {
+            $response = $helper->create_invoice($_REQUEST['invoice_id']);
+
+            header('Content-Type: application/json');
+            echo json_encode($response);
+            exit;
+        }
+
         $this->tplFileName = $this->tplVar['tab'] = __FUNCTION__;
         $this->output();
     }
