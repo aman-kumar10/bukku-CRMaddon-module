@@ -26,7 +26,7 @@ class Helper
         $field_id = $field->id;
 
         $query = Capsule::table('tblclients')
-            ->select('id', Capsule::raw("CONCAT(firstname, ' ', lastname) AS name"), 'email', 'companyname', 'status', 'created_at');
+            ->select('id', Capsule::raw("CONCAT(firstname, ' ', lastname) AS name"), 'email', 'companyname', 'status');
 
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
@@ -55,7 +55,6 @@ class Helper
                     'email' => $client->email,
                     'companyname' => $client->companyname,
                     'status' => $client->status,
-                    'created_at' => $client->created_at,
                     'action_btns' => '
                     <a class="btn btn-primary btn-sm user-syn-btn" data-userid="' . $client->id . '" data-username="' . $client->name . '">
                         <i class="fas fa-sync" id="sync-icon-' . $client->id . '"></i> Sync
@@ -94,10 +93,8 @@ class Helper
                 'tblinvoices.userid',
                 'tblinvoices.invoicenum',
                 'tblinvoices.date',
-                'tblinvoices.duedate',
                 'tblinvoices.total',
                 'tblinvoices.status',
-                'tblinvoices.paymentmethod',
                 'tblclients.firstname',
                 'tblclients.lastname'
             );
@@ -109,7 +106,6 @@ class Helper
                     ->orWhere('tblinvoices.date', 'like', "%$search%")
                     ->orWhere('tblinvoices.total', 'like', "%$search%")
                     ->orWhere('tblinvoices.status', 'like', "%$search%")
-                    ->orWhere('tblinvoices.paymentmethod', 'like', "%$search%")
                     ->orWhere('tblclients.firstname', 'like', "%$search%")
                     ->orWhere('tblclients.lastname', 'like', "%$search%");
             });
@@ -120,21 +116,23 @@ class Helper
 
         $data = [];
         foreach ($invoices as $invoice) {
-            $clientname = $invoice->firstname . " " . $invoice->lastname;
-            $currency = getCurrency($invoice->userid);
+            $sync_invoice = Capsule::table('mod_synced_invoices')->where('invoice_id', $invoice->id)->first();
+            if(!$sync_invoice) {
+                $clientname = $invoice->firstname . " " . $invoice->lastname;
+                $currency = getCurrency($invoice->userid);
+    
+                $data[] = [
+                    'check_box' => '<input type="checkbox" name="selectedinvoices[]" value="' . $invoice->id . '" class="checkall">',
+                    'id' => $invoice->invoicenum,
+                    'client_name' => $clientname,
+                    'invoice_date' => $invoice->date,
+                    'total_amount' => $currency['prefix'] . $invoice->total . $currency['suffix'],
+                    'status' => $invoice->status,
+                    'action_btns' => '
+                        <a class="btn btn-primary btn-sm invoice-syn-btn" data-invoiceid="' . $invoice->id . '"><i class="fas fa-sync" id="sync-icon-' . $invoice->id . '"></i> Sync</a>'
+                ];
+            }
 
-            $data[] = [
-                'check_box' => '<input type="checkbox" name="selectedinvoices[]" value="' . $invoice->id . '" class="checkall">',
-                'id' => $invoice->invoicenum,
-                'client_name' => $clientname,
-                'invoice_date' => $invoice->date,
-                'due_date' => $invoice->duedate,
-                'total_amount' => $currency['prefix'] . $invoice->total . $currency['suffix'],
-                'payment_method' => $invoice->paymentmethod,
-                'status' => $invoice->status,
-                'action_btns' => '
-                    <a class="btn btn-primary btn-sm invoice-syn-btn" data-invoiceid="' . $invoice->id . '"><i class="fas fa-sync" id="sync-icon-' . $invoice->id . '"></i> Sync</a>'
-            ];
         }
 
         return $data;
@@ -163,6 +161,61 @@ class Helper
     }
 
 
+    // Get Products 
+    public function getProductsDataTable($start, $length, $search = '')
+    {
+        $query = Capsule::table('tblproducts')
+            ->select('id', 'gid', 'name');
+
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('type', 'like', "%$search%")
+                    ->orWhere('gid', 'like', "%$search%")
+                    ->orWhere('name', 'like', "%$search%");
+            });
+        }
+
+        $products = $query->skip($start)->take($length)->get();
+
+
+        $data = [];
+        foreach ($products as $product) {
+            $sync_product = Capsule::table('mod_synced_products')->where('pid', $product->id)->first();
+
+            if (!$sync_product) {
+                $data[] = [
+                    'check_box' => '<input type="checkbox" name="selectedclients[]" value="' . $product->id . '" class="checkall">',
+                    'product_name' => $product->name,
+                    'group_name' => $this->getGroupName($product->gid),
+                    'action_btns' => '
+                    <a class="btn btn-primary btn-sm product-syn-btn" data-productid="' . $product->id . '">
+                        <i class="fas fa-sync" id="sync-icon-' . $product->id . '"></i> Sync
+                    </a>'
+                ];
+            }
+        }
+
+        return $data;
+    }
+
+    // Products search
+    public function getProductsCount($search = '')
+    {
+        $query = Capsule::table('tblproducts');
+
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('type', 'like', "%$search%")
+                    ->orWhere('gid', 'like', "%$search%")
+                    ->orWhere('name', 'like', "%$search%")
+                    ->orWhere('paytype', 'like', "%$search%");
+            });
+        }
+
+        return $query->count();
+    }
+
+
     // Get User details
     public function create_contact($id)
     {
@@ -174,21 +227,7 @@ class Helper
                 "entity_type" => 'MALAYSIAN_INDIVIDUAL',
                 "legal_name" => $user->firstname,
                 "other_name" => $user->lastname,
-                "reg_no_type" => 'BRN',
-                "reg_no" => "20230123012345",
-                "old_reg_no" => null,
-                "tax_id_no" => null,
-                "sst_reg_no" => null,
-                "contact_persons" => [
-                    [
-                        "first_name" => "Aisyah",
-                        "last_name" => "binti Ismail",
-                        "is_default_billing" => true,
-                        "is_default_shipping" => false,
-                    ],
-                ],
                 "email" => $user->email,
-                // "phone_no" => preg_replace('/[^\d+]/', '', $user->phonenumber),
                 "types" => ['customer'],
             ];
 
@@ -216,9 +255,12 @@ class Helper
                     ]);
                 }
 
+                logActivity("User Synced successsfully, User_id: " . $id . " and contact_id: " . $contact_id);
                 return ['status' => 'success', 'message' => 'Client created successfully.'];
+
             } else {
                 $create_contact['response'] = json_decode($create_contact['response'], true);
+                logActivity("Unable to syned the user: " .$id . ", Error:". $create_contact['response']['message']);
                 return ['status' => 'warning', 'message' => $create_contact['response']['message']];
             }
         } else {
@@ -285,6 +327,8 @@ class Helper
             $create_invoice = $api->create_invoice($data, $token);
 
             if ($create_invoice['status_code'] == 200) {
+                $create_invoice['response'] = json_decode($create_invoice['response'], true);
+                $this->insert_cstmInvoiceData($invoice->id, $product->id, $invoice->userid, $create_invoice['response']['transaction']['contact_id'], $create_invoice['response']['transaction']['id'], $create_invoice['response']['transaction']['form_items'][0]['product_id']);
                 return ['status' => 'success', 'message' => 'Invoice created successfully.'];
             } else {
                 $create_invoice['response'] = json_decode($create_invoice['response'], true);
@@ -293,5 +337,100 @@ class Helper
         } else {
             return ['status' => 'error', 'message' => 'Access token is missing.'];
         }
+    }
+
+
+    // Get User details
+    public function create_product($id)
+    {
+        $token = Capsule::table('tbladdonmodules')->where('module', 'bukkucrm')->where('setting', 'access_hash')->first('value');
+        if ($token) {
+            $product = Capsule::table('tblproducts')->where('id', $id)->first();
+            $random_sku = substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 5); 
+            $data = [
+                "name" => $product->name,
+                "sku" => $random_sku."-".$product->id,
+                "classification_code" => "022",
+                "is_selling" => true,
+                "sale_description" => $product->short_description,
+                "sale_account_id" => 20,
+                "sale_tax_code_id" => 3,
+                "is_buying" => true,
+                "purchase_description" => "Limited edition Black Bold Tip Pen from Pilut",
+                "purchase_account_id" => 32,
+                "track_inventory" => true,
+                "inventory_account_id" => 5,
+                "quantity_low_alert" => 10,
+                "bin_location" => "C403.537.40",
+                "remarks" => "Limited edition Black Bold Tip Pen from Pilut of Fall 2024.",
+                "units" => [
+                    [
+                        "label" => "unit",
+                        "rate" => 1,
+                        "sale_price" => 10,
+                        "purchase_price" => 3,
+                        "is_base" => true,
+                        "is_sale_default" => true,
+                        "is_purchase_default" => true
+                    ]
+                ],
+                "groupIds" => [$product->gid]
+            ];
+
+
+            $api = new Api;
+
+            $create_contact = $api->create_product($data, $token);
+
+            if ($create_contact['status_code'] == 200) {
+                $create_contact['response'] = json_decode($create_contact['response'], true);
+                
+                $this->insert_cstmProductData($product->id, $product->gid, $create_contact['response']['product']['name'], $create_contact['response']['product']['id']);
+
+                logActivity("Product Synced successsfully, product_id: " . $id);
+                return ['status' => 'success', 'message' => 'Product synced/created successfully.'];
+
+            } else {
+                $create_contact['response'] = json_decode($create_contact['response'], true);
+                logActivity("Unable to syned the user: " .$id . ", Error:". $create_contact['response']['message']);
+                return ['status' => 'warning', 'message' => $create_contact['response']['message']];
+            }
+        } else {
+            return ['status' => 'error', 'message' => 'Access token is missing.'];
+        }
+    }
+
+    // Get Product Group name
+    public function getGroupName($id) {
+        return Capsule::table('tblproductgroups')->where('id', $id)->value('name');
+    }
+
+    // Insert Product data in Custom table 
+    public function insert_cstmProductData($pid, $gid, $sync_pid, $name) {
+        if($action == 'product') {
+            $product = Capsule::table('mod_synced_products')->insert([
+                'pid' => $pid,
+                'gid' => $gid,
+                'name' => $name,
+                'sync_pid' => $sync_pid,
+                'sync_gid' => null,
+            ]);
+
+            return $product;
+        }
+    }
+
+    // Insert invoice data in Custom table 
+    public function insert_cstmInvoiceData($invoice_id, $pid, $user_id, $contact_id, $sync_InvoiceId, $sync_pid) {
+        $product = Capsule::table('mod_synced_invoices')->insert([
+            'invoice_id' => $invoice_id,
+            'product_id' => $pid,
+            'user_id' => $user_id,
+            'contact_id' => $contact_id,
+            'sync_invoiceID' => $sync_InvoiceId,
+            'sync_productID' => $sync_pid,
+        ]);
+
+        return $product;
     }
 }

@@ -9,11 +9,14 @@ use Smarty;
 
 class Controller
 {
+    
     private $params;
     private $tplVar = [];
     private $tplFileName;
 
     public $smarty;
+    private $lang = [];
+    
 
     public function __construct($params)
     {
@@ -27,10 +30,23 @@ class Controller
         $this->tplVar['header'] = ROOTDIR . "/modules/addons/{$module}/templates/header.tpl";
         $this->tplVar['modals'] = ROOTDIR . "/modules/addons/{$module}/templates/modals.tpl";
         $this->tplVar['moduleLink'] = $params['modulelink'];
+
+        $adminLang = isset($_SESSION['adminlang']) ? $_SESSION['adminlang'] : 'english';
+        $langFile = __DIR__ . "/../../lang/{$adminLang}.php";
+
+        if (!file_exists($langFile)) {
+            $langFile = __DIR__ . "/../../lang/english.php";
+        }
+
+        global $_ADDONLANG;
+        include($langFile);
+
+        $this->lang = $_ADDONLANG;
     }
 
     public function clients()
     {
+        global $whmcs;
         $helper = new Helper;
 
         if (isset($_REQUEST['form_action']) && $_REQUEST['form_action'] == 'create_contact') {
@@ -43,13 +59,29 @@ class Controller
         $this->tplFileName = $this->tplVar['tab'] = __FUNCTION__;
         $this->output();
     }
-    public function invoices_sync()
+    public function invoices()
     {
-
+        global $whmcs;
         $helper = new Helper;
 
         if (isset($_REQUEST['form_action']) && $_REQUEST['form_action'] == 'create_invoice') {
             $response = $helper->create_invoice($_REQUEST['invoice_id']);
+
+            header('Content-Type: application/json');
+            echo json_encode($response);
+            exit;
+        }
+
+        $this->tplFileName = $this->tplVar['tab'] = __FUNCTION__;
+        $this->output();
+    }
+    public function products()
+    {
+        global $whmcs;
+        $helper = new Helper;
+
+        if (isset($_REQUEST['form_action']) && $_REQUEST['form_action'] == 'create_product') {
+            $response = $helper->create_product($_REQUEST['product_id']);
 
             header('Content-Type: application/json');
             echo json_encode($response);
@@ -65,22 +97,8 @@ class Controller
     {
         $smarty = new Smarty();
         $smarty->assign('tplVar', $this->tplVar);
+        $smarty->assign('LANG', $this->lang);
         $smarty->display($this->tplVar['tplDIR'] . $this->tplFileName . '.tpl');
     }
 
-    // public function output()
-    // {
-    //     $this->smarty = new Smarty();
-    //     $this->smarty->assign('tplVar', $this->tplVar);
-    //     $this->smarty->assign('fileName', $this->tplFileName);
-    //     // $this->smarty->assign('lang', $this->params["_lang"]);
-    //     $this->smarty->compile_dir = $GLOBALS['templates_compiledir'];
-    //     $this->smarty->caching = false;
-    //     if (!empty($this->tplFileName)) {
-    //         $this->smarty->display($this->tplVar['tplDIR'] . $this->tplFileName . '.tpl');
-    //     } else {
-    //         $this->tplVar['errorMsg'] = 'not found';
-    //         $this->smarty->display($this->tplFileName . 'error.tpl');
-    //     }
-    // }
 }

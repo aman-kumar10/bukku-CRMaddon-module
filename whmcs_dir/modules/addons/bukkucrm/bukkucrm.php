@@ -41,11 +41,37 @@ function bukkucrm_config() {
 
 function bukkucrm_activate() {
     try {
+        // create table custom fields
         if(Capsule::table('tblcustomfields')->where('fieldname','like','bukkuClientID|%')->count()==0){
             Capsule::table('tblcustomfields')->insert([
                 'type'=>'client', 'relid'=>0, 'fieldname'=>'bukkuClientID|Bukku Client Id', 'fieldtype'=>'text', 'description'=>'', 'fieldoptions'=>'', 'regexpr'=>'', 'adminonly'=> '', 'required'=>'', 'showorder'=>'', 'showinvoice'=>'', 'sortorder'=>0,
             ]);
         }
+
+        // products sync custom table 
+        if (!Capsule::schema()->hasTable('mod_synced_products')) {
+            Capsule::schema()->create('mod_synced_products', function ($table) {
+                $table->increments('id');
+                $table->integer('pid');
+                $table->integer('gid');
+                $table->string('name');
+                $table->integer('sync_pid');
+                $table->integer('sync_gid');
+            });
+        }
+
+        if (!Capsule::schema()->hasTable('mod_synced_invoices')) {
+            Capsule::schema()->create('mod_synced_invoices', function ($table) {
+                $table->increments('id');
+                $table->integer('invoice_id');
+                $table->integer('product_id');
+                $table->string('user_id');
+                $table->string('contact_id');
+                $table->integer('sync_invoiceID');
+                $table->integer('sync_productID');
+            });
+        }
+
         return [
             'status' => 'success',
             'description' => 'Module activated successfully',
