@@ -8,7 +8,8 @@ use WHMCS\Database\Capsule;
 
 
 class Api {
-    // Create Contact
+
+    // Create Contact API handling
     function create_contact($data, $token) {
        
         $curl = new Curl();
@@ -30,7 +31,7 @@ class Api {
     }
 
 
-    // Create Invoice
+    // Create Invoice API handling
     function create_invoice($data, $token) {
         $curl = new Curl();
         $curl->endPoint = '/sales/invoices';
@@ -50,7 +51,8 @@ class Api {
         return $curlresponse;
     }
     
-    // Create Product
+
+    // Create Product API handling
     function create_product($data, $token) {
         $curl = new Curl();
         $curl->endPoint = '/products'; 

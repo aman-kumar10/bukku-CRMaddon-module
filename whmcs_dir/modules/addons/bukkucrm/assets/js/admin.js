@@ -1,5 +1,5 @@
 $(document).ready(function () {
-    // Get Clients
+    // Initialize Clients Table
     $('#clientTable').DataTable({
         "processing": true,
         "serverSide": true,
@@ -15,7 +15,7 @@ $(document).ready(function () {
         ]
     });
 
-    // Get Invoices
+    // Initialize Invoices Table
     $('#invoiceTable').DataTable({
         "processing": true,
         "serverSide": true,
@@ -31,7 +31,7 @@ $(document).ready(function () {
         ]
     });
     
-    // Get Products
+    // Initialize Products Table
     $('#productTable').DataTable({
         "processing": true,
         "serverSide": true,
@@ -68,7 +68,7 @@ $(document).ready(function () {
 
 
 
-    // Syncs clients
+    // Syncs clients functionality
     let syncUserId = null;
 
     $(document).on('click', '.user-syn-btn', function () {
@@ -144,7 +144,7 @@ $(document).ready(function () {
 
 
 
-    // Syncs invoice
+    // Syncs invoices functionality
     let syncInvoiceId = null;
 
     $(document).on('click', '.invoice-syn-btn', function () {
@@ -219,7 +219,7 @@ $(document).ready(function () {
 
     
 
-    // Syncs products
+    // Syncs products functionality
     let syncProductId = null;
 
     $(document).on('click', '.product-syn-btn', function () {

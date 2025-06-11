@@ -3,21 +3,47 @@
 use WHMCS\Database\Capsule;
 use WHMCS\Module\Addon\Bukkucrm\Helper;
 
-
-
-// Sync client on new client create
-add_hook('ClientAdd', 1, function(array $params) {
-
-    $helper = new Helper;
-
+/* Synchronization on invoice creation hook */
+add_hook('InvoiceCreation', 1, function ($vars) {
     try {
-        if($params['client_id']) {
-            $create_contact = $helper->create_contact($params['client_id']); 
-            logModuleCall( 'bukkucrm', "Create Contact", 'Contact create on new client add, Client Id: '. $params['client_id'], $create_contact);
+        $helper = new Helper;
+        $invoiceId = $vars['invoiceid'];
+
+        if ($invoiceId) {
+            $invoice = Capsule::table('tblinvoices')->where('id', $invoiceId)->first();
+
+            // Sync client linked to this invoice if not already
+            $field_id = Capsule::table('tblcustomfields')->where('fieldname', 'like', 'bukkuClientID|%')->where('type', 'client')->value('id');
+            $user_sync = Capsule::table('tblcustomfieldsvalues')->where('fieldid', $field_id)->where('relid', $invoice->userid)->value('value');
+
+            if (!$user_sync) {
+                $helper->create_contact($invoice->userid);
+            }
+
+            // Sync product linked to this invoice if not already
+            $hostingItem = Capsule::table('tblinvoiceitems')->where('invoiceid', $invoiceId)->where('type', 'Hosting')->first();
+
+            if ($hostingItem) {
+                $hosting = Capsule::table('tblhosting')->where('id', $hostingItem->relid)->first();
+
+                if ($hosting) {
+                    $productId = $hosting->packageid;
+
+                    $sync_product = Capsule::table('mod_synced_products')
+                        ->where('pid', $productId)
+                        ->first();
+
+                    if (!$sync_product) {
+                        $helper->create_product($productId);
+                    }
+                }
+            }
+
+            // Sync Invoice
+            $helper->create_invoice($invoiceId);
         }
-        
-        
     } catch (Exception $e) {
-        logActivity("Unable to sync client. Error: " . $e->getMessage());
+        logActivity("Error in sync process: " . $e->getMessage());
     }
 });
+

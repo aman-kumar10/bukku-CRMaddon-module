@@ -22,6 +22,7 @@ class Curl{
         }
     }
 
+    /* Curl Handlig */
     function curlCall()
     {
         try {
