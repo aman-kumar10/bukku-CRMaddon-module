@@ -1,5 +1,10 @@
 <?php
-// File: /modules/addons/bukkucrm/bukkucrm.php
+
+/**
+ * Bukku CRM WHMCS Addon Module
+ * Handles synchronization of clients, products, and invoices with Bukku CRM.
+ * Author: WGS
+ */
 
 use WHMCS\Database\Capsule;
 use WHMCS\Module\Addon\Bukkucrm\Admin\AdminDispatcher;
@@ -9,6 +14,9 @@ if (!defined("WHMCS")) {
     die("This file cannot be accessed directly");
 }
 
+/* 
+ * Define module configuration options 
+ */
 function bukkucrm_config() {
     return [
         'name' => 'Bukku WHMCS CRM module',
@@ -30,6 +38,16 @@ function bukkucrm_config() {
                 'Size' => '25',
                 'Description' => "Company's Sub Domain goes here",
             ],
+            'contact_type' => [
+                'FriendlyName' => 'Contact Type',
+                'Type' => 'dropdown',
+                'Options' => [
+                    'customer' => 'Customer',
+                    'supplier' => 'Supplier',
+                    'employee' => 'Employee',
+                ],
+                'Description' => 'Choose Contact Type',
+            ],
             'api_test_connection' => [
                 'FriendlyName' => 'Test Mode',
                 'Type' => 'yesno',
@@ -39,13 +57,45 @@ function bukkucrm_config() {
     ];
 }
 
+/* 
+ * Module Activation
+ * - Creates custom client fields
+ * - Creates custom tables for synced products and invoices
+ */
 function bukkucrm_activate() {
     try {
+        // Create custom client field for storing Bukku Client ID
         if(Capsule::table('tblcustomfields')->where('fieldname','like','bukkuClientID|%')->count()==0){
             Capsule::table('tblcustomfields')->insert([
                 'type'=>'client', 'relid'=>0, 'fieldname'=>'bukkuClientID|Bukku Client Id', 'fieldtype'=>'text', 'description'=>'', 'fieldoptions'=>'', 'regexpr'=>'', 'adminonly'=> '', 'required'=>'', 'showorder'=>'', 'showinvoice'=>'', 'sortorder'=>0,
             ]);
         }
+
+        // Create table to store synced products
+        if (!Capsule::schema()->hasTable('mod_synced_products')) {
+            Capsule::schema()->create('mod_synced_products', function ($table) {
+                $table->increments('id');
+                $table->integer('pid');
+                $table->integer('gid');
+                $table->string('name');
+                $table->integer('sync_pid');
+                $table->integer('sync_gid');
+            });
+        }
+
+        // Create table to store synced invoices
+        if (!Capsule::schema()->hasTable('mod_synced_invoices')) {
+            Capsule::schema()->create('mod_synced_invoices', function ($table) {
+                $table->increments('id');
+                $table->integer('invoice_id');
+                $table->integer('product_id');
+                $table->string('user_id');
+                $table->string('contact_id');
+                $table->integer('sync_invoiceID');
+                $table->integer('sync_productID');
+            });
+        }
+
         return [
             'status' => 'success',
             'description' => 'Module activated successfully',
@@ -58,6 +108,10 @@ function bukkucrm_activate() {
     }
 }
 
+/*
+ * Module Deactivation
+ * - Currently does not drop any tables or fields
+ */
 function bukkucrm_deactivate() {
     try {
         return [
@@ -72,6 +126,10 @@ function bukkucrm_deactivate() {
     }
 }
 
+/*
+ * Module Admin Output Dispatcher
+ * Routes admin actions through AdminDispatcher class
+ */
 function bukkucrm_output($vars)
 {
     $action = isset($_REQUEST['action']) ? $_REQUEST['action'] : 'clients';

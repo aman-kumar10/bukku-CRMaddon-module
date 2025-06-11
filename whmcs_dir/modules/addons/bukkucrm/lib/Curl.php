@@ -4,7 +4,7 @@ namespace WHMCS\Module\Addon\Bukkucrm;
 use WHMCS\Database\Capsule;
 
 class Curl{
-    private $baseUrl = 'https://api.bukku.fyi'; //enter base url for testing
+    private $baseUrl = 'https://api.bukku.fyi';
     public $token = '';
     private $key = '';
     public $method = 'GET';
@@ -22,6 +22,7 @@ class Curl{
         }
     }
 
+    /* Curl Handlig */
     function curlCall()
     {
         try {
@@ -65,17 +66,17 @@ class Curl{
 
             $httpCode = curl_getinfo($this->curl, CURLINFO_HTTP_CODE);
 
-            logModuleCall("Bukkucrm Module", $this->action, [
+            logModuleCall("bukkucrm", $this->action, [
                 "url" => $this->baseUrl . $this->endPoint,
                 "method" => $this->method,
                 "data" => $this->data
             ], [
                 "httpCode" => $httpCode,
                 "result" => json_decode($response),
-            ]); // log the response
+            ]); 
 
             $response = ['status_code'=>$httpCode,'response'=>$response];
-            return $response; //return the response
+            return $response; 
 
             // if (curl_errno($this->curl)) {
             //     throw new \Exception(curl_error($this->curl));

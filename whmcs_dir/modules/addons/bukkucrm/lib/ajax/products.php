@@ -19,10 +19,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     $length = isset($request['length']) ? (int) $request['length'] : 10;
     $search = isset($request['search']['value']) ? $request['search']['value'] : '';
 
-    $data = $helper->getInvoiceDataTable($start, $length, $search);
-    
-    $totalRecords = $helper->getInvoiceCount();
-    $filteredRecords = $helper->getInvoiceCount($search);
+    $data = $helper->getProductsDataTable($start, $length, $search);
+    $totalRecords = $helper->getProductsCount();
+    $filteredRecords = $helper->getProductsCount($search);
 
     echo json_encode([
         "draw" => $draw,
