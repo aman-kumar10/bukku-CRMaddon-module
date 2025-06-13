@@ -112,6 +112,18 @@ class Controller
     }
 
     /**
+     * Logs tab handler
+     */
+    public function bukkucrm_logs()
+    {
+        // global $whmcs;
+        // $helper = new Helper;
+
+        $this->tplFileName = $this->tplVar['tab'] = __FUNCTION__;
+        $this->output();
+    }
+
+    /**
      * Loads the assigned Smarty template
      */
     public function output()

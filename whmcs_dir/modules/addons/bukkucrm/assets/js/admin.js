@@ -44,6 +44,31 @@ $(document).ready(function () {
         ]
     });
 
+    // Initialize Logs Table
+    $('#logsTable').DataTable({
+        "processing": true,
+        "serverSide": true,
+        "ajax": "../modules/addons/bukkucrm/lib/Ajax/logs.php",
+        "columns": [
+            { "data": "date", "orderable": false, "searchable": false },
+            { "data": "action" },
+            {
+                "data": "request", "orderable": false,
+                "render": function(data, type, row, meta) {
+                    return `<textarea rows="5" readonly style="width: 100%; height: 100%;">${data}</textarea>`;
+                }
+            },
+            // { "data": "status_code", "orderable": false },
+            {
+                "data": "response", "orderable": false,
+                "render": function(data, type, row, meta) {
+                    return `<textarea rows="5" readonly style="width: 100%; height: 100%;">${data}</textarea>`;
+                }
+            }
+        ]
+    });
+
+
 
     // Check all
     $('#checkallClients').on('change', function () {

@@ -48,6 +48,18 @@ function bukkucrm_config() {
                 ],
                 'Description' => 'Choose Contact Type',
             ],
+            'sale_acc_id' => [
+                'FriendlyName' => 'Sale Account Id',
+                'Type' => 'text',
+                'Size' => '25',
+                'Description' => "Sale Account Id",
+            ],
+            'purchase_acc_id' => [
+                'FriendlyName' => 'Purchase Account Id',
+                'Type' => 'text',
+                'Size' => '25',
+                'Description' => "Purchase Account Id",
+            ],
             'api_test_connection' => [
                 'FriendlyName' => 'Test Mode',
                 'Type' => 'yesno',
@@ -71,6 +83,17 @@ function bukkucrm_activate() {
             ]);
         }
 
+        // Create table to store synced products group
+        if (!Capsule::schema()->hasTable('mod_synced_productgroups')) {
+            Capsule::schema()->create('mod_synced_productgroups', function ($table) {
+                $table->increments('id');
+                $table->text('name');
+                $table->string('gid');
+                $table->string('sync_gid');
+                $table->timestamps();
+            });
+        }
+        
         // Create table to store synced products
         if (!Capsule::schema()->hasTable('mod_synced_products')) {
             Capsule::schema()->create('mod_synced_products', function ($table) {
@@ -93,6 +116,18 @@ function bukkucrm_activate() {
                 $table->string('contact_id');
                 $table->integer('sync_invoiceID');
                 $table->integer('sync_productID');
+            });
+        }
+
+        // Create table for custom log activities
+        if (!Capsule::schema()->hasTable('mod_bukkucrm_logs')) {
+            Capsule::schema()->create('mod_bukkucrm_logs', function ($table) {
+                $table->increments('id');
+                $table->string('action');
+                $table->longText('request');
+                $table->string('http_code');
+                $table->longText('response');
+                $table->timestamp('datetime')->useCurrent();
             });
         }
 

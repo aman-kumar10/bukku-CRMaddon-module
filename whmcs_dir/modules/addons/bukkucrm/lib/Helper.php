@@ -2,6 +2,7 @@
 
 namespace WHMCS\Module\Addon\Bukkucrm;
 
+use Exception;
 use WHMCS\Module\Addon\Bukkucrm\Api;
 
 use WHMCS\Database\Capsule;
@@ -164,8 +165,7 @@ class Helper
 
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
-                $q->where('type', 'like', "%$search%")
-                    ->orWhere('gid', 'like', "%$search%")
+                $q->where('gid', 'like', "%$search%")
                     ->orWhere('name', 'like', "%$search%");
             });
         }
@@ -199,10 +199,59 @@ class Helper
 
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
-                $q->where('type', 'like', "%$search%")
-                    ->orWhere('gid', 'like', "%$search%")
-                    ->orWhere('name', 'like', "%$search%")
-                    ->orWhere('paytype', 'like', "%$search%");
+                $q->where('gid', 'like', "%$search%")
+                    ->orWhere('name', 'like', "%$search%");
+            });
+        }
+
+        return $query->count();
+    }
+
+    /* Get Logs */ 
+    public function getLogsDataTable($start, $length, $search = '')
+    {
+        $query = Capsule::table('mod_bukkucrm_logs')
+            ->select('id', 'action', 'request', 'http_code', 'response', 'datetime')
+            ->orderBy('id', 'desc');
+
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('action', 'like', "%$search%")
+                    ->orWhere('request', 'like', "%$search%")
+                    ->orWhere('http_code', 'like', "%$search%")
+                    ->orWhere('response', 'like', "%$search%")
+                    ->orWhere('datetime', 'like', "%$search%");
+            });
+        }
+
+        $logs = $query->skip($start)->take($length)->get();
+
+
+        $data = [];
+        foreach ($logs as $log) {
+            
+            $data[] = [
+                'date' => $log->datetime,
+                'action' => $log->action,
+                'request' => $log->request,
+                // 'status_code' => $log->http_code,
+                'response' => "status_code: ". $log->http_code . "\n" .$log->response
+            ];
+        }
+
+        return $data;
+    }
+    public function getLogsCount($search = '')
+    {
+        $query = Capsule::table('mod_bukkucrm_logs');
+
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('action', 'like', "%$search%")
+                    ->orWhere('request', 'like', "%$search%")
+                    ->orWhere('http_code', 'like', "%$search%")
+                    ->orWhere('response', 'like', "%$search%")
+                    ->orWhere('datetime', 'like', "%$search%");
             });
         }
 
@@ -220,10 +269,36 @@ class Helper
 
             $data = [
                 "entity_type" => 'MALAYSIAN_INDIVIDUAL',
-                "legal_name" => $user->firstname." ".$user->lastname,
-                "other_name" => $user->companyname,
-                "email" => $user->email,
+                "legal_name" => $user->firstname,
+                "other_name" => $user->lastname,
+                "reg_no_type" => "BRN",
+                "reg_no" => $user->datecreated. "-". strtoupper(substr($user->firstname.$user->lastname, 0, 3)),
+                "contact_persons" => [
+                    [
+                    "first_name" => "Random",
+                    "last_name" => "User(Test)",
+                    "is_default_billing" => false,
+                    "is_default_shipping" => false
+                    ]
+                ],
                 "types" => [$contact_type],
+                "email" => $user->email,
+                "phone_no" => preg_replace('/\D/', '', $user->phonenumber),
+                "remarks" => "This is a remarks for the contact: ".$user->firstname.".",
+                "receive_monthly_statement" => true,
+                "receive_invoice_reminder" => true,
+                "addresses" => [
+                    [
+                        "name" => $user->address1,
+                        "street" => $user->address2,
+                        "city" => $user->city,
+                        "state" => $user->state,
+                        "postcode" => $user->postcode,
+                        "country_code" => $user->country,
+                        "is_default_billing" => true,
+                        "is_default_shipping" => true,
+                    ]
+                ]
             ];
 
             $api = new Api;
@@ -285,8 +360,11 @@ class Helper
             $hostingItem = Capsule::table('tblinvoiceitems')->where('invoiceid', $id)->where('type', 'Hosting')->first();
             $hosting = Capsule::table('tblhosting')->where('id', $hostingItem->relid)->first();
             $product = Capsule::table('tblproducts')->where('id', $hosting->packageid)->first();
-
+            $product_id = Capsule::table('mod_synced_products')->where('pid', $hosting->packageid)->value('sync_pid');
             $form_description = !empty($product->short_description) ? $product->short_description : $product->name . ", description...";
+            
+            $client_data = Capsule::table('tblclients')->where('id', $invoice->userid)->first();
+            $account_id = Capsule::table('tbladdonmodules')->where('module', 'bukkucrm')->where('setting', 'sale_acc_id')->value('value');
 
             $data = [
                 "payment_mode" => "credit",
@@ -294,13 +372,14 @@ class Helper
                 "date" => $invoice->date,
                 "currency_code" => $currency['code'],
                 "exchange_rate" => $currency['rate'],
-                "tax_mode" => "inclusive",
+                "billing_party" => $client_data->address1.",\n".$client_data->address2.",\n".$client_data->city,
+                "tax_mode" => "exclusive",
                 "form_items" => [
                     [
-                        "account_id"=> 20,
+                        "account_id"=> $account_id,
                         "description"=> $form_description,
                         "service_date"=> $service->regdate,
-                        "product_id"=> $hosting->packageid,
+                        "product_id"=> $product_id,
                         "unit_price"=> $invoice->total,
                         "quantity"=> 1
                     ]
@@ -350,50 +429,88 @@ class Helper
     /* Create Product, Product sync */
     public function create_product($id)
     {
+        $api = new Api;
+
         $token = Capsule::table('tbladdonmodules')->where('module', 'bukkucrm')->where('setting', 'access_hash')->first('value');
         if ($token) {
             $product = Capsule::table('tblproducts')->where('id', $id)->first();
+            $sale_acc_id = Capsule::table('tbladdonmodules')->where('module', 'bukkucrm')->where('setting', 'sale_acc_id')->value('value');
+            $purchase_acc_id = Capsule::table('tbladdonmodules')->where('module', 'bukkucrm')->where('setting', 'purchase_acc_id')->value('value');
+            if(!$sale_acc_id) {
+                $create_sale_acc = $api->create_sale_acc($token); 
+                if($create_sale_acc['status_code'] == 200) {
+                    $create_sale_acc['response'] = json_decode($create_sale_acc['response'], true);
+                    $create_sale_acc_id = $create_sale_acc['response']['account']['id'];
+                    $this->insert_accountData($create_sale_acc_id, 'sale_acc_id');
+                }
+            }
+            if(!$purchase_acc_id) {
+                $create_purchase_acc = $api->create_purchase_acc($token); 
+                if($create_purchase_acc['status_code'] == 200) {
+                    $create_purchase_acc['response'] = json_decode($create_purchase_acc['response'], true);
+                    $create_purchase_acc_id = $create_purchase_acc['response']['account']['id'];
+                    $this->insert_accountData($create_purchase_acc_id, 'purchase_acc_id');
+                }
+            }
+
+            $syn_gid = Capsule::table('mod_synced_productgroups')->where('gid', $product->gid)->first();
+            if(!$syn_gid) {
+                $data = [
+                    "name" => $this->getGroupName($product->gid),
+                    "product_ids" => []
+                ];
+                $create_productGroup = $api->create_productGroup($data, $token);
+                if($create_productGroup['status_code'] == 200) {
+                    $create_productGroup['response'] = json_decode($create_productGroup['response'], true);
+                    $res_gid = $create_productGroup['response']['group']['id'];
+                    $res_name = $create_productGroup['response']['group']['name'];
+                    $this->insert_syncedGroup($product->gid, $res_name, $res_gid);
+                }
+            }
+
+            $product_price = Capsule::table('tblpricing')->where('type', 'product')->where('relid', $product->id)->value('monthly');
+
             // $random_sku = substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 5); 
             $data = [
                 "name" => $product->name,
                 "is_selling" => true,
-                "sale_account_id" => 20,
-                "sale_tax_code_id" => 3,
+                "sale_account_id" => $sale_acc_id,
                 "is_buying" => false,
                 "track_inventory" => false,
                 "units" => [
                     [
                         "label" => "unit",
                         "rate" => 1,
-                        "is_base" => true
+                        "sale_price" => $product_price,
+                        "purchase_price" => $product_price,
+                        "is_base" => true,
+                        "is_sale_default" => true
                     ]
                 ]
             ];
 
+            $create_product = $api->create_product($data, $token); 
 
-            $api = new Api;
+            if ($create_product['status_code'] == 200) {
 
-            $create_contact = $api->create_product($data, $token); 
-
-            if ($create_contact['status_code'] == 200) {
-
-                $create_contact['response'] = json_decode($create_contact['response'], true);
+                $create_product['response'] = json_decode($create_product['response'], true);
                 
                 // Insert product data in custom table
                 $this->insert_cstmProductData(
                     $product->id,
                     $product->gid,
-                    $create_contact['response']['product']['id'],
-                    $create_contact['response']['product']['name']
+                    $create_product['response']['product']['id'],
+                    $create_product['response']['product']['name'],
+                    $sync_gid ?? ''
                 );
 
                 logActivity("Product Synced successsfully, product_id: " . $id);
                 return ['status' => 'success', 'message' => 'Product synced/created successfully.'];
 
             } else {
-                $create_contact['response'] = json_decode($create_contact['response'], true);
-                logActivity("Unable to syned the user: " .$id . ", Error:". $create_contact['response']['message']);
-                return ['status' => 'error', 'message' => $create_contact['response']['message']];
+                $create_product['response'] = json_decode($create_product['response'], true);
+                logActivity("Unable to syned the user: " .$id . ", Error:". $create_product['response']['message']);
+                return ['status' => 'error', 'message' => $create_product['response']['message']];
             }
         } else {
             return ['status' => 'error', 'message' => 'Access token is missing.'];
@@ -418,26 +535,64 @@ class Helper
                 'sync_productID' => $sync_pid,
             ]);
         } catch (\Exception $e) {
-            logModuleCall('bukkucrm', 'insert_cstmInvoiceData', 'Error', $e->getMessage());
+            logModuleCall('bukkucrm', 'mod_synced_invoices', 'Error', $e->getMessage());
             return false;
         }
     }
 
     /* Insert Product data in Custom table */
-    public function insert_cstmProductData($pid, $gid, $sync_pid, $name) {
+    public function insert_cstmProductData($pid, $gid, $sync_pid, $name, $sync_gid) {
         try {
             return Capsule::table('mod_synced_products')->insert([
                 'pid' => $pid,
                 'gid' => $gid,
                 'name' => $name,
                 'sync_pid' => $sync_pid,
-                'sync_gid' => '',
+                'sync_gid' => $sync_gid,
             ]);
         } catch (\Exception $e) {
-            logModuleCall('bukkucrm', 'insert_cstmInvoiceData', 'Error', $e->getMessage());
+            logModuleCall('bukkucrm', 'mod_synced_products', 'Error', $e->getMessage());
             return false;
         }
     }
 
+    /* Store activity in custom logs */
+    public function bukkucrsLogs($action, $request, $httpCode, $response) {
+        try {
+            return Capsule::table('mod_bukkucrm_logs')->insert([
+                'action' => $action,
+                'request' => $request,
+                'http_code' => $httpCode,
+                'response' => $response,
+            ]);
+        } catch(Exception $e) {
+            logModuleCall('bukkucrm', 'bukkucrsLogs', 'Error in mod_bukkucrm_logs log entry:', $e->getMessage());
+        }
+    }
+
+    /* insert account details */
+    public function insert_accountData($id, $action) {
+        try {
+            return Capsule::table('tbladdonmodules')->where('module', 'bukkucrm')->where('setting', $action)->insert([
+                'value' => $id,
+            ]);
+        } catch(Exception $e) {
+            logModuleCall('bukkucrm', 'bukkucrsLogs', 'Error in mod_bukkucrm_logs log entry:', $e->getMessage());
+        }
+    }
+
+    /* Store synced productGroup in custom logs */
+    public function insert_syncedGroup($gid, $name, $sync_gid) {
+        try {
+            return Capsule::table('mod_synced_productgroups')->insert([
+                'name' => $name,
+                'gid' => $gid,
+                'sync_gid' => $sync_gid,
+            ]);
+
+        } catch(Exception $e) {
+            logModuleCall('bukkucrm', 'bukkucrsLogs', 'Error in mod_synced_productgroups log entry:', $e->getMessage());
+        }
+    }
     
 }

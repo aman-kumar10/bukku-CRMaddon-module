@@ -333,3 +333,10 @@ p.modal-msg {
   left: 80%;
   transform: translate(-50%, -50%);
 }
+#logsTable td {
+  padding: 0px;
+}
+#logsTable td textarea {
+  border: 1px solid #ccc;
+  padding: 5px;
+}
