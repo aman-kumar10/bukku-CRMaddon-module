@@ -377,11 +377,13 @@ class Helper
                 "form_items" => [
                     [
                         "account_id"=> $account_id,
+                        // "account_id"=> 20,
                         "description"=> $form_description,
                         "service_date"=> $service->regdate,
                         "product_id"=> $product_id,
                         "unit_price"=> $invoice->total,
-                        "quantity"=> 1
+                        "quantity"=> 1,
+                        "classification_code" => "022"
                     ]
                 ],
                 "term_items" => [
@@ -391,8 +393,8 @@ class Helper
                         "description" => "Full Payment"
                     ]
                 ],
-                "status" => "draft",
-                "myinvois_action" => "NORMAL"
+                "status" => "ready",
+                "myinvois_action" => "VALIDATE"
             ];
 
             $api = new Api;
@@ -470,12 +472,18 @@ class Helper
 
             $product_price = Capsule::table('tblpricing')->where('type', 'product')->where('relid', $product->id)->value('monthly');
 
+            $sale_id = Capsule::table('tbladdonmodules')->where('module', 'bukkucrm')->where('setting', 'sale_acc_id')->value('value');
+            $purchase_id = Capsule::table('tbladdonmodules')->where('module', 'bukkucrm')->where('setting', 'purchase_acc_id')->value('value');
+
             // $random_sku = substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 5); 
             $data = [
                 "name" => $product->name,
                 "is_selling" => true,
-                "sale_account_id" => $sale_acc_id,
-                "is_buying" => false,
+                "sale_account_id" => $sale_id,
+                // "sale_account_id" => 20,
+                "is_buying" => true,
+                "purchase_account_id" => $purchase_id,
+                // "purchase_account_id" => 32,
                 "track_inventory" => false,
                 "units" => [
                     [
@@ -573,7 +581,7 @@ class Helper
     /* insert account details */
     public function insert_accountData($id, $action) {
         try {
-            return Capsule::table('tbladdonmodules')->where('module', 'bukkucrm')->where('setting', $action)->insert([
+            return Capsule::table('tbladdonmodules')->where('module', 'bukkucrm')->where('setting', $action)->update([
                 'value' => $id,
             ]);
         } catch(Exception $e) {

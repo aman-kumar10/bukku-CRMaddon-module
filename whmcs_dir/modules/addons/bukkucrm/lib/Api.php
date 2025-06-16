@@ -87,11 +87,11 @@ class Api {
         $curl->method = 'POST';
 
         $data = [
-            "name" => "Bukku Testing Sale Account",
-            "type" => "current_liabilities",
-            "system_type" => "accounts_payable",
+            "name" => "Bukku CRM Sale Account",
+            "type" => "income",
+            "system_type" => "accounts_receivable",
             "classification" => "OPERATING",
-            "code" => "2100",
+            "code" => "4900",
             "description" => "This is the testing Bukku CRM sale account",
             "currency_code" => 'MYR',
             "balance" => null
@@ -117,12 +117,12 @@ class Api {
         $curl->method = 'POST';
 
         $data = [
-            "name" => "Bukku Testing Invoice Account",
-            "type" => "current_liabilities",
+            "name" => "Bukku CRM Purchase Account",
+            "type" => "expenses",
             "system_type" => "accounts_payable",
             "classification" => "OPERATING",
-            "code" => "1100",
-            "description" => "This is the testing Bukku CRM invoice account",
+            "code" => "5900",
+            "description" => "This is the testing Bukku CRM purchase account",
             "currency_code" => 'MYR',
             "balance" => null
         ];
