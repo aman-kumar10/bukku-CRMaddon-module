@@ -9,6 +9,7 @@
 use WHMCS\Database\Capsule;
 use WHMCS\Module\Addon\Bukkucrm\Admin\AdminDispatcher;
 use WHMCS\Module\Addon\Bukkucrm\Client\ClientDispatcher;
+use WHMCS\Module\Addon\Bukkucrm\Helper;
 
 if (!defined("WHMCS")) {
     die("This file cannot be accessed directly");
@@ -18,6 +19,26 @@ if (!defined("WHMCS")) {
  * Define module configuration options 
  */
 function bukkucrm_config() {
+    $healper = new Helper;
+    
+    $getAccounts = $healper->getAccounts();
+
+    if($getAccounts['status_code'] == 200) {
+        $getAccounts['response'] = json_decode($getAccounts['response'], true);
+        $accounts = $getAccounts['response']['accounts'];
+        foreach ($accounts as $account) {
+            $accountOptions[$account['id']] = $account['name'] . " (" . $account['code'] . ")";
+
+            if (!empty($account['children']) && is_array($account['children'])) {
+                foreach ($account['children'] as $child) {
+                    $accountOptions[$child['id']] = '-- ' . $child['name'] . " (" . $child['code'] . ")";
+                }
+            }
+        }
+    } else {
+        $accounts = [];
+    }
+
     return [
         'name' => 'Bukku WHMCS CRM module',
         'description' => '',
@@ -48,17 +69,11 @@ function bukkucrm_config() {
                 ],
                 'Description' => 'Choose Contact Type',
             ],
-            'sale_acc_id' => [
-                'FriendlyName' => 'Sale Account Id',
-                'Type' => 'text',
-                'Size' => '25',
-                'Description' => "Sale Account Id",
-            ],
-            'purchase_acc_id' => [
-                'FriendlyName' => 'Purchase Account Id',
-                'Type' => 'text',
-                'Size' => '25',
-                'Description' => "Purchase Account Id",
+            'select_account' => [
+                'FriendlyName' => 'Account',
+                'Type' => 'dropdown',
+                'Options' => $accountOptions,
+                'Description' => "Choose sales account",
             ],
             'api_test_connection' => [
                 'FriendlyName' => 'Test Mode',

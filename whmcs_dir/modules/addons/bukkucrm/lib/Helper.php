@@ -293,11 +293,13 @@ class Helper
             $user = Capsule::table('tblclients')->where('id', $id)->first();
 
             $data = [
-                "entity_type" => 'MALAYSIAN_INDIVIDUAL',
+                // "entity_type" => 'MALAYSIAN_INDIVIDUAL',
+                "entity_type" => 'MALAYSIAN_COMPANY',
                 "legal_name" => $user->firstname,
                 "other_name" => $user->lastname,
                 "reg_no_type" => "BRN",
                 "reg_no" => $user->datecreated. "-". strtoupper(substr($user->firstname.$user->lastname, 0, 3)),
+                "tax_id_no" => $user->tax_id,
                 "contact_persons" => [
                     [
                     "first_name" => "Random",
@@ -389,11 +391,14 @@ class Helper
             $form_description = !empty($product->short_description) ? $product->short_description : $product->name . ", description...";
             
             $client_data = Capsule::table('tblclients')->where('id', $invoice->userid)->first();
-            $account_id = Capsule::table('tbladdonmodules')->where('module', 'bukkucrm')->where('setting', 'sale_acc_id')->value('value');
-
+            $sale_id = Capsule::table('tbladdonmodules')->where('module', 'bukkucrm')->where('setting', 'select_account')->value('value');
+            $number = "IV-".$invoice->id.$contact_id.$product_id;
+            $number2 = "RF-".$product_id.$contact_id."00".$invoice->id;
             $data = [
                 "payment_mode" => "credit",
                 "contact_id" => $contact_id,
+                "number" => $number,
+                "number2" => $number2,
                 "date" => $invoice->date,
                 "currency_code" => $currency['code'],
                 "exchange_rate" => $currency['rate'],
@@ -401,8 +406,8 @@ class Helper
                 "tax_mode" => "exclusive",
                 "form_items" => [
                     [
-                        "account_id"=> $account_id,
-                        // "account_id"=> 20,
+                        "type" => null,
+                        "account_id"=> $sale_id,
                         "description"=> $form_description,
                         "service_date"=> $service->regdate,
                         "product_id"=> $product_id,
@@ -419,6 +424,7 @@ class Helper
                     ]
                 ],
                 "status" => "ready",
+                // "myinvois_action" => "NORMAL"
                 "myinvois_action" => "VALIDATE"
             ];
 
@@ -461,24 +467,6 @@ class Helper
         $token = Capsule::table('tbladdonmodules')->where('module', 'bukkucrm')->where('setting', 'access_hash')->first('value');
         if ($token) {
             $product = Capsule::table('tblproducts')->where('id', $id)->first();
-            $sale_acc_id = Capsule::table('tbladdonmodules')->where('module', 'bukkucrm')->where('setting', 'sale_acc_id')->value('value');
-            $purchase_acc_id = Capsule::table('tbladdonmodules')->where('module', 'bukkucrm')->where('setting', 'purchase_acc_id')->value('value');
-            if(!$sale_acc_id) {
-                $create_sale_acc = $api->create_sale_acc($token); 
-                if($create_sale_acc['status_code'] == 200) {
-                    $create_sale_acc['response'] = json_decode($create_sale_acc['response'], true);
-                    $create_sale_acc_id = $create_sale_acc['response']['account']['id'];
-                    $this->insert_accountData($create_sale_acc_id, 'sale_acc_id');
-                }
-            }
-            if(!$purchase_acc_id) {
-                $create_purchase_acc = $api->create_purchase_acc($token); 
-                if($create_purchase_acc['status_code'] == 200) {
-                    $create_purchase_acc['response'] = json_decode($create_purchase_acc['response'], true);
-                    $create_purchase_acc_id = $create_purchase_acc['response']['account']['id'];
-                    $this->insert_accountData($create_purchase_acc_id, 'purchase_acc_id');
-                }
-            }
 
             $syn_gid = Capsule::table('mod_synced_productgroups')->where('gid', $product->gid)->first();
             if(!$syn_gid) {
@@ -497,18 +485,14 @@ class Helper
 
             $product_price = Capsule::table('tblpricing')->where('type', 'product')->where('relid', $product->id)->value('monthly');
 
-            $sale_id = Capsule::table('tbladdonmodules')->where('module', 'bukkucrm')->where('setting', 'sale_acc_id')->value('value');
-            $purchase_id = Capsule::table('tbladdonmodules')->where('module', 'bukkucrm')->where('setting', 'purchase_acc_id')->value('value');
+            $sale_id = Capsule::table('tbladdonmodules')->where('module', 'bukkucrm')->where('setting', 'select_account')->value('value');
 
             // $random_sku = substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'), 0, 5); 
             $data = [
                 "name" => $product->name,
                 "is_selling" => true,
                 "sale_account_id" => $sale_id,
-                // "sale_account_id" => 20,
-                "is_buying" => true,
-                "purchase_account_id" => $purchase_id,
-                // "purchase_account_id" => 32,
+                "is_buying" => false,
                 "track_inventory" => false,
                 "units" => [
                     [
@@ -550,6 +534,20 @@ class Helper
         }
     }
 
+    /* Get Account */
+    public  function getAccounts() {
+        try {
+            $api = new Api;
+            
+            $token = Capsule::table('tbladdonmodules')->where('module', 'bukkucrm')->where('setting', 'access_hash')->first('value');
+            $getAccounts = $api->getAccounts($token);
+
+            return $getAccounts;
+
+        } catch(Exception $e) {
+            logActivity("Unable to get accounts, Error: ". $e->getMessage());
+        }
+    }
 
     /* Get Product Group name **/
     public function getGroupName($id) {
