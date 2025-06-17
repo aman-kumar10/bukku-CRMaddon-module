@@ -1,6 +1,7 @@
 <?php
 
 namespace WHMCS\Module\Addon\Bukkucrm;
+use WHMCS\Module\Addon\Bukkucrm\Helper;
 use WHMCS\Database\Capsule;
 
 class Curl{
@@ -66,14 +67,15 @@ class Curl{
 
             $httpCode = curl_getinfo($this->curl, CURLINFO_HTTP_CODE);
 
-            logModuleCall("bukkucrm", $this->action, [
-                "url" => $this->baseUrl . $this->endPoint,
-                "method" => $this->method,
-                "data" => $this->data
-            ], [
-                "httpCode" => $httpCode,
-                "result" => json_decode($response),
-            ]); 
+            // Manage custom logs
+            $helper = new Helper;
+
+            if($this->data == '') {
+                $request = $this->baseUrl . $this->endPoint;
+            } else {
+                $request = json_encode($this->data);
+            }
+            $helper->bukkucrsLogs($this->action, $request, $httpCode, $response);
 
             $response = ['status_code'=>$httpCode,'response'=>$response];
             return $response; 

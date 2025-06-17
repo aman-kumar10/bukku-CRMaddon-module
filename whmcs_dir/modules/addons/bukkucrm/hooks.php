@@ -3,6 +3,23 @@
 use WHMCS\Database\Capsule;
 use WHMCS\Module\Addon\Bukkucrm\Helper;
 
+// Synchronization on client add hook
+add_hook('ClientAdd', 1, function(array $params) {
+    try {
+        $helper = new Helper;
+
+        if($params['client_id']) {
+            $helper->create_contact($params['client_id']); 
+        }
+        
+    } catch (Exception $e) {
+        // Consider logging or reporting the error.
+        logActivity("Unable to sync client. Error: " . $e->getMessage());
+    }
+});
+
+
+
 /* Synchronization on invoice creation hook */
 add_hook('InvoiceCreation', 1, function ($vars) {
     try {
@@ -43,7 +60,7 @@ add_hook('InvoiceCreation', 1, function ($vars) {
             $helper->create_invoice($invoiceId);
         }
     } catch (Exception $e) {
-        logActivity("Error in sync process: " . $e->getMessage());
+        logActivity("Error in sync process, during invoice creation hook: " . $e->getMessage());
     }
 });
 

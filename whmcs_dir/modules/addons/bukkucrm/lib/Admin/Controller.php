@@ -112,6 +112,25 @@ class Controller
     }
 
     /**
+     * Logs tab handler
+     */
+    public function bukkucrm_logs()
+    {
+        // global $whmcs;
+        $helper = new Helper;
+        if(isset($_REQUEST['form_action']) && $_REQUEST['form_action'] == 'delete_logs') {
+            $response = $helper->delete_logs($_REQUEST['form_action']);
+
+            header('Content-Type: application/json');
+            echo json_encode($response);
+            exit;
+        }
+        
+        $this->tplFileName = $this->tplVar['tab'] = __FUNCTION__;
+        $this->output();
+    }
+
+    /**
      * Loads the assigned Smarty template
      */
     public function output()

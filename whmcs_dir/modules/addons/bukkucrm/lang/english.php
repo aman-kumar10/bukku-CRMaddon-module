@@ -1,9 +1,11 @@
 <?php
 
 /* Header Tabs language variables */
-$_ADDONLANG['tab_clients'] = "Clients Sync";
-$_ADDONLANG['tab_invoices'] = "Invoices Sync";
-$_ADDONLANG['tab_products'] = "Products Sync";
+$_ADDONLANG['tab_clients'] = "Clients";
+$_ADDONLANG['tab_invoices'] = "Invoices";
+$_ADDONLANG['tab_products'] = "Products";
+$_ADDONLANG['tab_logs'] = "Logs";
+$_ADDONLANG['tab_reset_logs'] = "Reset Module Logs";
 
 
 /* Client's table language variables */
@@ -36,3 +38,13 @@ $_ADDONLANG['products_list'] = "Products";
 
 $_ADDONLANG['table_product_name'] = "Product Name";
 $_ADDONLANG['table_group_name'] = "Group Name";
+
+
+/* Log's table language variables */
+$_ADDONLANG['logs_list'] = "Bukku CRM Logs";
+
+$_ADDONLANG['table_logs_date'] = "Date";
+$_ADDONLANG['table_logs_action'] = "Action";
+$_ADDONLANG['table_logs_request'] = "Request Data";
+$_ADDONLANG['table_logs_status_code'] = "Status Code";
+$_ADDONLANG['table_logs_response'] = "Response";
