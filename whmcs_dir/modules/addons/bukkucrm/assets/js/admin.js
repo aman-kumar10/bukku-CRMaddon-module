@@ -321,5 +321,70 @@ $(document).ready(function () {
     });
 
 
+    // Delete CRM module logs
+    $(document).on('click', '#deleteCRMLogs', function () {
+        $('#delCRMLogsModal').css('display', 'block');
+    });
+
+    $(document).on('click', '.cancel-btn', function () {
+        $('#delCRMLogsModal').hide();
+        $(".fa.fa-spinner").removeClass("icon-spin"); //
+    });
+
+    $(document).on('click', '#delCRMLogsModal', function (e) {
+        if ($(e.target).is('#delCRMLogsModal')) {
+            $(".fa.fa-spinner").removeClass("icon-spin"); //
+            $('#delCRMLogsModal').hide();
+        }
+    });
+
+    $(document).on('click', '#yesBtn', function () {
+
+        $(".fa.fa-spinner").addClass("icon-spin");
+        $(".icon-wrapper .fa.fa-trash").css('font-size', '30px');
+        // $(".icon-wrapper .fa.fa-trash").css('display', 'none');
+
+        $.ajax({
+            url: '',
+            type: 'POST',
+            data: {
+                form_action: 'delete_logs',
+            },
+            dataType: 'json',
+            success: function (response) {
+                console.log('Message:', response);
+                $('#delCRMLogsModal').hide();
+                if (response.status === 'success') {
+                    iziToast.success({
+                        title: 'Success',
+                        message: response.message,
+                        position: 'topRight'
+                    });
+                    
+                    $('#logsTable').DataTable().ajax.reload(null, false);
+
+                } else {
+                    iziToast.error({
+                        title: 'Error',
+                        message: response.message,
+                        position: 'topRight'
+                    });
+                }
+            },
+            error: function (xhr, status, error) {
+                console.error('AJAX Error:', error);
+                iziToast.error({
+                    title: 'Error',
+                    message: 'AJAX request failed: ' + error,
+                    position: 'topRight'
+                });
+            },
+            complete: function () {
+                $(".fa.fa-spinner").removeClass("icon-spin");
+            }
+        });
+    });
+    
+
 });
 

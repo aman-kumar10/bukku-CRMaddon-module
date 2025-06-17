@@ -117,8 +117,15 @@ class Controller
     public function bukkucrm_logs()
     {
         // global $whmcs;
-        // $helper = new Helper;
+        $helper = new Helper;
+        if(isset($_REQUEST['form_action']) && $_REQUEST['form_action'] == 'delete_logs') {
+            $response = $helper->delete_logs($_REQUEST['form_action']);
 
+            header('Content-Type: application/json');
+            echo json_encode($response);
+            exit;
+        }
+        
         $this->tplFileName = $this->tplVar['tab'] = __FUNCTION__;
         $this->output();
     }

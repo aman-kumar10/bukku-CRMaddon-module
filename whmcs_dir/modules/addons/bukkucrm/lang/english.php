@@ -1,10 +1,11 @@
 <?php
 
 /* Header Tabs language variables */
-$_ADDONLANG['tab_clients'] = "Clients Sync";
-$_ADDONLANG['tab_invoices'] = "Invoices Sync";
-$_ADDONLANG['tab_products'] = "Products Sync";
+$_ADDONLANG['tab_clients'] = "Clients";
+$_ADDONLANG['tab_invoices'] = "Invoices";
+$_ADDONLANG['tab_products'] = "Products";
 $_ADDONLANG['tab_logs'] = "Logs";
+$_ADDONLANG['tab_reset_logs'] = "Reset Module Logs";
 
 
 /* Client's table language variables */

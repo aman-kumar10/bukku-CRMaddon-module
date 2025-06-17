@@ -66,19 +66,38 @@ class Helper
     }
     public function getClientsCount($search = '')
     {
-        $query = Capsule::table('tblclients');
+        $fieldId = Capsule::table('tblcustomfields')
+            ->where('type', 'client')
+            ->where('fieldname', 'like', 'bukkuClientID|%')
+            ->value('id');
+
+        if (!$fieldId) {
+            return 0;
+        }
+
+        $query = Capsule::table('tblclients')
+            ->leftJoin('tblcustomfieldsvalues', function ($join) use ($fieldId) {
+                $join->on('tblclients.id', '=', 'tblcustomfieldsvalues.relid')
+                    ->where('tblcustomfieldsvalues.fieldid', '=', $fieldId);
+            })
+            ->where(function ($q) {
+                $q->whereNull('tblcustomfieldsvalues.value')
+                ->orWhere('tblcustomfieldsvalues.value', '=', '');
+            });
 
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
-                $q->where('firstname', 'like', "%$search%")
-                    ->orWhere('lastname', 'like', "%$search%")
-                    ->orWhere('email', 'like', "%$search%")
-                    ->orWhere('companyname', 'like', "%$search%");
+                $q->where('tblclients.firstname', 'like', "%$search%")
+                ->orWhere('tblclients.lastname', 'like', "%$search%")
+                ->orWhere('tblclients.email', 'like', "%$search%")
+                ->orWhere('tblclients.companyname', 'like', "%$search%");
             });
         }
 
         return $query->count();
     }
+
+
 
     /* Get invoices */ 
     public function getInvoiceDataTable($start, $length, $search = '')
@@ -139,23 +158,26 @@ class Helper
     public function getInvoiceCount($search = '')
     {
         $query = Capsule::table('tblinvoices')
-            ->join('tblclients', 'tblclients.id', '=', 'tblinvoices.userid');
+            ->leftJoin('mod_synced_invoices', 'tblinvoices.id', '=', 'mod_synced_invoices.invoice_id')
+            ->join('tblclients', 'tblclients.id', '=', 'tblinvoices.userid')
+            ->whereNull('mod_synced_invoices.invoice_id');
 
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('tblinvoices.userid', 'like', "%$search%")
-                    ->orWhere('tblinvoices.invoicenum', 'like', "%$search%")
-                    ->orWhere('tblinvoices.date', 'like', "%$search%")
-                    ->orWhere('tblinvoices.total', 'like', "%$search%")
-                    ->orWhere('tblinvoices.status', 'like', "%$search%")
-                    ->orWhere('tblinvoices.paymentmethod', 'like', "%$search%")
-                    ->orWhere('tblclients.firstname', 'like', "%$search%")
-                    ->orWhere('tblclients.lastname', 'like', "%$search%");
+                ->orWhere('tblinvoices.invoicenum', 'like', "%$search%")
+                ->orWhere('tblinvoices.date', 'like', "%$search%")
+                ->orWhere('tblinvoices.total', 'like', "%$search%")
+                ->orWhere('tblinvoices.status', 'like', "%$search%")
+                ->orWhere('tblinvoices.paymentmethod', 'like', "%$search%")
+                ->orWhere('tblclients.firstname', 'like', "%$search%")
+                ->orWhere('tblclients.lastname', 'like', "%$search%");
             });
         }
 
         return $query->count();
     }
+
 
     /* Get Products */ 
     public function getProductsDataTable($start, $length, $search = '')
@@ -195,17 +217,20 @@ class Helper
     }
     public function getProductsCount($search = '')
     {
-        $query = Capsule::table('tblproducts');
+        $query = Capsule::table('tblproducts')
+            ->leftJoin('mod_synced_products', 'tblproducts.id', '=', 'mod_synced_products.pid')
+            ->whereNull('mod_synced_products.pid');
 
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
-                $q->where('gid', 'like', "%$search%")
-                    ->orWhere('name', 'like', "%$search%");
+                $q->where('tblproducts.gid', 'like', "%$search%")
+                ->orWhere('tblproducts.name', 'like', "%$search%");
             });
         }
 
         return $query->count();
     }
+
 
     /* Get Logs */ 
     public function getLogsDataTable($start, $length, $search = '')
@@ -603,4 +628,16 @@ class Helper
         }
     }
     
+    /* Reset module logs */
+    public function delete_logs($action) {
+        if($action == 'delete_logs') {
+            $deleted = Capsule::table('mod_bukkucrm_logs')->truncate(); 
+
+            if ($deleted === null) { 
+                return ['status' => 'success', 'message' => 'Module logs reset successfully.'];
+            } else {
+                return ['status' => 'error', 'message' => 'Failed to reset the module logs.'];
+            }
+        }
+    }
 }

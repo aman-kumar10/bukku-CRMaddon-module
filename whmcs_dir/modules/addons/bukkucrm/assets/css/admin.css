@@ -325,7 +325,16 @@ p.modal-msg {
 #invoiceSyncModal {
   display: none;
 }
-.icon-wrapper .fa-file-invoice {
+.icon-wrapper .fa-file-invoice{
+  font-size: 40px;
+  color: #333;
+  position: absolute;
+  top: 80%;
+  left: 80%;
+  transform: translate(-50%, -50%);
+}
+.icon-wrapper .fa-trash {
+  color: red;
   font-size: 40px;
   color: #333;
   position: absolute;
@@ -339,4 +348,8 @@ p.modal-msg {
 #logsTable td textarea {
   border: 1px solid #ccc;
   padding: 5px;
+}
+
+.add_hdr .add_nav .delete-logs #deleteCRMLogs {
+  font-size: 16px !important;
 }

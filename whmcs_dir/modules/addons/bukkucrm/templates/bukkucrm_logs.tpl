@@ -1,4 +1,6 @@
 {include file=$tplVar.header}
+{include file=$tplVar.modals}
+
 
 <h2>{$LANG['logs_list']}</h2>
 
