@@ -75,7 +75,9 @@ class Curl{
             } else {
                 $request = json_encode($this->data);
             }
-            $helper->bukkucrsLogs($this->action, $request, $httpCode, $response);
+            if($this->action != 'getAccounts') {
+                $helper->bukkucrsLogs($this->action, $request, $httpCode, $response);
+            }
 
             $response = ['status_code'=>$httpCode,'response'=>$response];
             return $response; 
