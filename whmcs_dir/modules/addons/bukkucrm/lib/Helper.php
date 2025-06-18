@@ -299,7 +299,7 @@ class Helper
                 "other_name" => $user->lastname,
                 "reg_no_type" => "BRN",
                 "reg_no" => $user->datecreated. "-". strtoupper(substr($user->firstname.$user->lastname, 0, 3)),
-                "tax_id_no" => $user->tax_id,
+                "tax_id_no" => $user->tax_id, //C1867821010
                 "contact_persons" => [
                     [
                     "first_name" => "Random",
