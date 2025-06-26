@@ -19,6 +19,6 @@
 </table>
 
 
-<div class="selcted-itms">
+{* <div class="selcted-itms">
     <a class="btn btn-primary"><img src="" alt=""> {$LANG['sync_selected_btn']}</a>
-</div>
+</div> *}
